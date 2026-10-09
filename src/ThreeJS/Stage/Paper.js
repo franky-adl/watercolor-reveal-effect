@@ -12,7 +12,7 @@ import displayFragmentShader from "../Shaders/Paper/display.frag";
 // paper features are drawn for a canvas this many pixels tall, so the grain looks the same at any size
 const PAPER_UNITS = 1100;
 // painting height as a fraction of the viewport height
-const IMAGE_HEIGHT = 1.0;
+const IMAGE_HEIGHT = 0.9;
 
 export default class Paper {
     constructor() {
@@ -26,7 +26,7 @@ export default class Paper {
         this.params = {
             paper: this.preset.id,
         };
-        this.image = this.resources.items.demo1;
+        this.image = this.resources.items.landscape1;
         this.seed = Math.random();
         this.size = new THREE.Vector2();
         this.reveal = new Reveal();
@@ -100,13 +100,23 @@ export default class Paper {
                 uMottle: { value: this.preset.mottle },
                 uTexture: { value: 1 },
                 uImage: { value: this.image },
+                uImageNext: { value: this.image },
                 uImageScale: { value: new THREE.Vector2(1, 1) },
+                uImageScaleNext: { value: new THREE.Vector2(1, 1) },
                 uImageWhite: { value: 0.92 },
                 uDensity: { value: 1 },
-                uGreyIntensity: { value: 0.5 },
+                uGreyIntensity: { value: 0.4 },
                 uGranulation: { value: 0.2 },
                 uRevealMask: { value: this.reveal.texture },
                 uRevealFeather: { value: 0.35 },
+                uSeed: { value: Math.random() },
+                uSeedIn: { value: Math.random() },
+                uTransition: { value: 0 },
+                uTransitionOutT: { value: 0 },
+                uTransitionInT: { value: -1 },
+                uTransitionSoft: { value: 0.15 },
+                uTransitionScale: { value: 3.0 },
+                uTransitionOctaves: { value: 4 },
             },
             depthWrite: false,
         });
@@ -149,15 +159,20 @@ export default class Paper {
         this.renderer.setRenderTarget(previousTarget);
     }
 
-    // Centre the painting at IMAGE_HEIGHT of the viewport, keeping its aspect.
-    // uImageScale is the painting's size in screen uv.
-    placeImage() {
-        const { width, height } = this.image.image;
+    // Painting size in screen uv at IMAGE_HEIGHT, keeping aspect.
+    imageScaleFor(texture) {
+        const { width, height } = texture.image;
         const imageAspect = width / height;
         const viewAspect = this.size.x / this.size.y;
-        this.displayMaterial.uniforms.uImageScale.value.set(
+        return new THREE.Vector2(
             (IMAGE_HEIGHT * imageAspect) / viewAspect,
             IMAGE_HEIGHT,
+        );
+    }
+
+    placeImage() {
+        this.displayMaterial.uniforms.uImageScale.value.copy(
+            this.imageScaleFor(this.image),
         );
     }
 
@@ -171,6 +186,46 @@ export default class Paper {
         if (!preset || preset === this.preset) return;
         this.preset = preset;
         this.generate();
+    }
+
+    setImage(texture) {
+        if (!texture || texture === this.image) return;
+        this.image = texture;
+        this.displayMaterial.uniforms.uImage.value = texture;
+        this.placeImage();
+    }
+
+    // Gallery dissolve: outgoing + optional incoming (overlap) over gfbm.
+    setTransition({
+        active,
+        outT,
+        inT,
+        nextImage,
+        soft,
+        scale,
+        octaves,
+        reseedOut = false,
+        reseedIn = false,
+    } = {}) {
+        const u = this.displayMaterial.uniforms;
+        if (active !== undefined) u.uTransition.value = active ? 1 : 0;
+        if (outT !== undefined) u.uTransitionOutT.value = outT;
+        if (inT !== undefined) u.uTransitionInT.value = inT;
+        if (nextImage) {
+            u.uImageNext.value = nextImage;
+            u.uImageScaleNext.value.copy(this.imageScaleFor(nextImage));
+        }
+        if (soft !== undefined) u.uTransitionSoft.value = soft;
+        if (scale !== undefined) u.uTransitionScale.value = scale;
+        if (octaves !== undefined) u.uTransitionOctaves.value = octaves;
+        if (reseedOut) u.uSeed.value = Math.random();
+        if (reseedIn) u.uSeedIn.value = Math.random();
+    }
+
+    setTransitionProgress(outT, inT) {
+        const u = this.displayMaterial.uniforms;
+        u.uTransitionOutT.value = outT;
+        u.uTransitionInT.value = inT;
     }
 
     resize() {

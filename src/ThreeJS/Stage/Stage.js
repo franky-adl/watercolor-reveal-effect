@@ -1,5 +1,6 @@
 import Orchestrator from "../Orchestrator.js";
 import Paper from "./Paper.js";
+import Gallery from "./Gallery.js";
 
 export default class Stage {
     constructor() {
@@ -10,6 +11,7 @@ export default class Stage {
         // Wait for resources
         this.orc.emitter.on("ready", () => {
             this.paper = new Paper();
+            this.gallery = new Gallery(this.paper);
         });
     }
 
@@ -20,7 +22,8 @@ export default class Stage {
 
     // both time params are measured in seconds
     update(elapsed, delta) {
-        // call stage elements' update methods if necessary
+        // gallery dissolve uniforms update before the reveal sim steps
+        this.gallery?.update(elapsed);
         this.paper?.update(elapsed, delta);
     }
 }

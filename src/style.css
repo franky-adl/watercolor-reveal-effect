@@ -17,3 +17,83 @@ body
     left: 0;
     outline: none;
 }
+
+.nav
+{
+    position: fixed;
+    top: 50%;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.25rem;
+    height: 5.5rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: rgba(55, 48, 40, 0.45);
+    cursor: pointer;
+    transform: translateY(-50%);
+    transition: color 180ms ease, opacity 180ms ease;
+}
+
+.nav svg
+{
+    width: 1.35rem;
+    height: 2.7rem;
+    display: block;
+    filter: drop-shadow(0 1px 0 rgba(255, 248, 235, 0.35));
+}
+
+.nav:hover
+{
+    color: rgba(40, 34, 28, 0.75);
+}
+
+.nav:focus-visible
+{
+    outline: 1px solid rgba(55, 48, 40, 0.35);
+    outline-offset: 4px;
+}
+
+.nav:disabled
+{
+    opacity: 0.25;
+    cursor: default;
+    pointer-events: none;
+}
+
+.nav--prev
+{
+    left: 0.75rem;
+}
+
+.nav--next
+{
+    right: 0.75rem;
+}
+
+@media (max-width: 640px)
+{
+    .nav
+    {
+        width: 2.5rem;
+        height: 4.5rem;
+    }
+
+    .nav svg
+    {
+        width: 1.1rem;
+        height: 2.2rem;
+    }
+
+    .nav--prev
+    {
+        left: 0.25rem;
+    }
+
+    .nav--next
+    {
+        right: 0.25rem;
+    }
+}

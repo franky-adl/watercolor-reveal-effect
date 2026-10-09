@@ -46,3 +46,8 @@
 - bleed falloff: strength lost per hop; lower means bigger blooms (Yuri's `1.02`).
 - drying: how fast everything fades back to grey (Yuri's `1.001`).
 - edge feather: how crisp the wet edge reads in the final image.
+
+## TODO
+
+- include a different set of images for mobile(portrait ones)
+- open-source the demo
