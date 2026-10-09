@@ -4,6 +4,7 @@ import Stats from "stats-gl";
 
 import Debug from "./Utils/Debug.js";
 import Sizes from "./Utils/Sizes.js";
+import Pointer from "./Utils/Pointer.js";
 import Camera from "./Camera.js";
 import Renderer from "./Renderer.js";
 import Stage from "./Stage/Stage.js";
@@ -30,6 +31,7 @@ export default class Orchestrator {
         // Setup
         this.debug = new Debug();
         this.sizes = new Sizes();
+        this.pointer = new Pointer();
         this.clock = new THREE.Timer();
         // this makes use of the Page Visibility API to avoid large time delta values when the app is inactive (e.g. tab switched or browser hidden).
         this.clock.connect(document);

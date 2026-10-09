@@ -13,6 +13,11 @@ uniform vec2 uImageScale;     // painting size in screen uv, centred
 uniform float uImageWhite;    // linear value treated as bare paper, so the scan's off-white background drops out
 uniform float uDensity;       // overall pigment strength
 uniform float uGranulation;   // how much more pigment settles in the paper's valleys
+uniform float uAspect;        // viewport width / height, so the reveal stays circular
+uniform vec2 uRevealCenter;   // cursor in screen uv
+uniform float uRevealRadius;  // reveal radius as a fraction of the viewport height
+uniform float uRevealSoftness;// fraction of the radius that fades from colour to grey
+uniform float uReveal;        // reveal strength, 0 while the cursor is off the page
 
 vec3 paperColour(vec4 paper, vec3 base){
   vec3 c = base * (1.0 + uTexture * ((paper.r - 0.5) * 0.7 + (paper.b - 0.5) * uMottle * 2.0));
@@ -33,6 +38,13 @@ vec3 lightness(vec2 vUv) {
   return vec3(exp(-l * 0.7), exp(-l * 0.7), exp(-l * 0.5));
 }
 
+// How much of the painting's colour shows: 1 under the cursor, 0 (grey) elsewhere.
+float revealAmount(vec2 uv){
+  float d = length((uv - uRevealCenter) * vec2(uAspect, 1.0));
+  float inner = uRevealRadius * (1.0 - uRevealSoftness);
+  return uReveal * (1.0 - smoothstep(inner, uRevealRadius + 1e-4, d));
+}
+
 // Light let through by the pigment layer (1 = bare paper), Beer-Lambert style:
 // the painting's colour becomes an absorbance, scaled up in the valleys of the sheet.
 vec3 pigment(vec2 uv, vec4 paper){
@@ -40,6 +52,8 @@ vec3 pigment(vec2 uv, vec4 paper){
   if (any(lessThan(iuv, vec2(0.0))) || any(greaterThan(iuv, vec2(1.0)))) return vec3(1.0);
 
   vec3 img = min(texture(uImage, iuv).rgb / uImageWhite, vec3(1.0));
+  float grey = dot(img, vec3(0.2126, 0.7152, 0.0722));
+  img = mix(vec3(grey), img, revealAmount(uv));
   vec3 absorb = -log(max(img, vec3(1e-3)));
   float pool = max(1.0 + uGranulation * (0.5 - paper.g), 0.0);
   return exp(-absorb * uDensity * pool);

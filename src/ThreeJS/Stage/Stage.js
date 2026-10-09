@@ -21,5 +21,6 @@ export default class Stage {
     // both time params are measured in seconds
     update(elapsed, delta) {
         // call stage elements' update methods if necessary
+        this.paper?.update(elapsed, delta);
     }
 }
