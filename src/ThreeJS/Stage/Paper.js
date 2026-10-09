@@ -10,6 +10,8 @@ import displayFragmentShader from "../Shaders/Paper/display.frag";
 
 // paper features are drawn for a canvas this many pixels tall, so the grain looks the same at any size
 const PAPER_UNITS = 1100;
+// painting height as a fraction of the viewport height
+const IMAGE_HEIGHT = 0.8;
 
 export default class Paper {
     constructor() {
@@ -17,11 +19,13 @@ export default class Paper {
         this.scene = this.orc.scene;
         this.renderer = this.orc.renderer.instance;
         this.debug = this.orc.debug;
+        this.resources = this.orc.resources;
 
         this.preset = DEFAULT_PAPER;
         this.params = {
             paper: this.preset.id,
         };
+        this.image = this.resources.items.demo1;
         this.seed = Math.random();
         this.size = new THREE.Vector2();
 
@@ -93,6 +97,11 @@ export default class Paper {
                 uFleckTint: { value: new THREE.Color(this.preset.fleck) },
                 uMottle: { value: this.preset.mottle },
                 uTexture: { value: 1 },
+                uImage: { value: this.image },
+                uImageScale: { value: new THREE.Vector2(1, 1) },
+                uImageWhite: { value: 0.92 },
+                uDensity: { value: 1 },
+                uGranulation: { value: 0.2 },
             },
             depthWrite: false,
         });
@@ -125,6 +134,7 @@ export default class Paper {
         display.uPaperTint.value.set(this.preset.tint);
         display.uFleckTint.value.set(this.preset.fleck);
         display.uMottle.value = this.preset.mottle;
+        this.placeImage();
 
         const previousTarget = this.renderer.getRenderTarget();
         this.renderer.setRenderTarget(this.fieldTarget);
@@ -132,6 +142,18 @@ export default class Paper {
         this.renderer.setRenderTarget(this.paperTarget);
         this.lightQuad.render(this.renderer);
         this.renderer.setRenderTarget(previousTarget);
+    }
+
+    // Centre the painting at IMAGE_HEIGHT of the viewport, keeping its aspect.
+    // uImageScale is the painting's size in screen uv.
+    placeImage() {
+        const { width, height } = this.image.image;
+        const imageAspect = width / height;
+        const viewAspect = this.size.x / this.size.y;
+        this.displayMaterial.uniforms.uImageScale.value.set(
+            (IMAGE_HEIGHT * imageAspect) / viewAspect,
+            IMAGE_HEIGHT,
+        );
     }
 
     setPaper(id) {
@@ -161,6 +183,18 @@ export default class Paper {
                 .onChange((id) => {
                     this.setPaper(id);
                 });
+
+            const display = this.displayMaterial.uniforms;
+            const imageFolder = this.debug.ui.addFolder("image");
+            imageFolder
+                .add(display.uDensity, "value", 0, 3, 0.01)
+                .name("density");
+            imageFolder
+                .add(display.uGranulation, "value", 0, 5, 0.01)
+                .name("granulation");
+            imageFolder
+                .add(display.uImageWhite, "value", 0.5, 1, 0.001)
+                .name("white point");
         }
     }
 }

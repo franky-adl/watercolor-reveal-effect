@@ -15,7 +15,7 @@ export const PAPERS = [
         kind: 0,
         tint: "#fafcf3",
         fleck: "#8a8070",
-        bump: 0.6,
+        bump: 0.45,
         mottle: 0.0,
     },
     {

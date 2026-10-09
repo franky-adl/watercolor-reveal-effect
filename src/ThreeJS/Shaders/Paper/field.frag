@@ -17,8 +17,7 @@ uniform int uKind;
 
 // Cold press: rounded, irregular bumps of mixed size (~0.5-2 mm) over a fine felt.
 vec3 coldPress(vec2 p){
-  // float hills = blobs(p / 3., 110.0) * 0.1 + sfbm(vec2(p.x * 0.04, p.y * 0.04), 3, 32.2) * 0.9;
-  float hills = blobs(p / 5., 110.0) * 0.1 + gfbm(vec2(p.x * 0.1, p.y * 0.08), 3, 30.0) * 0.9;
+  float hills = blobs(p / 3., 110.0) * 0.1 + gfbm(vec2(p.x * 0.15, p.y * 0.12), 3, 30.0) * 0.9;
   return vec3(0.5 + (hills - 0.5) * 1.3, fbm(p * 0.012, 4, 140.0), 0.5);
 }
 // Hot press: pressed nearly flat; only a faint felt and the fibres show.
