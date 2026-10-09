@@ -11,7 +11,8 @@ uniform float uTexture;       // texture strength: 0 a flat sheet of the tint, 1
 uniform sampler2D uImage;     // the painting, sRGB texture so it samples as linear
 uniform vec2 uImageScale;     // painting size in screen uv, centred
 uniform float uImageWhite;    // linear value treated as bare paper, so the scan's off-white background drops out
-uniform float uDensity;       // overall pigment strength
+uniform float uDensity;       // pigment strength of the revealed colour
+uniform float uGreyIntensity; // pigment strength of the unrevealed greytone (ink)
 uniform float uGranulation;   // how much more pigment settles in the paper's valleys
 uniform sampler2D uRevealMask;// watercolour reveal from reveal.frag: 0 grey, 1 full colour
 uniform float uRevealFeather; // how much of the mask's fall-off reads as a soft edge; low gives a crisp wet edge
@@ -47,11 +48,14 @@ vec3 pigment(vec2 uv, vec4 paper){
   if (any(lessThan(iuv, vec2(0.0))) || any(greaterThan(iuv, vec2(1.0)))) return vec3(1.0);
 
   vec3 img = min(texture(uImage, iuv).rgb / uImageWhite, vec3(1.0));
+  float reveal = revealAmount(uv);
   float grey = dot(img, vec3(0.2126, 0.7152, 0.0722));
-  img = mix(vec3(grey), img, revealAmount(uv));
+  img = mix(vec3(grey), img, reveal);
   vec3 absorb = -log(max(img, vec3(1e-3)));
   float pool = max(1.0 + uGranulation * (0.5 - paper.g), 0.0);
-  return exp(-absorb * uDensity * pool);
+  // grey ink and colour pigment can be tuned separately for contrast on reveal
+  float density = mix(uGreyIntensity, uDensity, reveal);
+  return exp(-absorb * density * pool);
 }
 
 void main(){

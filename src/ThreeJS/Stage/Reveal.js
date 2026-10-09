@@ -72,7 +72,7 @@ export default class Reveal {
                 uBrushStrength: { value: 0 },
                 uFlow: { value: 0.01 },
                 uBleed: { value: 0.015 },
-                uDry: { value: 0.01 },
+                uDry: { value: 0.002 },
             },
         });
         this.quad = new FullScreenQuad(this.material);

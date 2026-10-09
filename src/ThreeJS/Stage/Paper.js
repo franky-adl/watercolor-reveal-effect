@@ -12,7 +12,7 @@ import displayFragmentShader from "../Shaders/Paper/display.frag";
 // paper features are drawn for a canvas this many pixels tall, so the grain looks the same at any size
 const PAPER_UNITS = 1100;
 // painting height as a fraction of the viewport height
-const IMAGE_HEIGHT = 0.8;
+const IMAGE_HEIGHT = 1.0;
 
 export default class Paper {
     constructor() {
@@ -103,6 +103,7 @@ export default class Paper {
                 uImageScale: { value: new THREE.Vector2(1, 1) },
                 uImageWhite: { value: 0.92 },
                 uDensity: { value: 1 },
+                uGreyIntensity: { value: 0.5 },
                 uGranulation: { value: 0.2 },
                 uRevealMask: { value: this.reveal.texture },
                 uRevealFeather: { value: 0.35 },
@@ -198,7 +199,10 @@ export default class Paper {
             const imageFolder = this.debug.ui.addFolder("image");
             imageFolder
                 .add(display.uDensity, "value", 0, 3, 0.01)
-                .name("density");
+                .name("color density");
+            imageFolder
+                .add(display.uGreyIntensity, "value", 0, 3, 0.01)
+                .name("greytone");
             imageFolder
                 .add(display.uGranulation, "value", 0, 5, 0.01)
                 .name("granulation");
