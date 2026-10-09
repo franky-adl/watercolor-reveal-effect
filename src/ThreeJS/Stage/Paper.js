@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
 import Orchestrator from "../Orchestrator.js";
 import { PAPERS, DEFAULT_PAPER } from "./papers.js";
+import Reveal from "./Reveal.js";
 
 import fullscreenVertexShader from "../Shaders/Paper/fullscreen.vert";
 import fieldFragmentShader from "../Shaders/Paper/field.frag";
@@ -12,9 +13,6 @@ import displayFragmentShader from "../Shaders/Paper/display.frag";
 const PAPER_UNITS = 1100;
 // painting height as a fraction of the viewport height
 const IMAGE_HEIGHT = 0.8;
-// how quickly (per second) the reveal circle catches up with the cursor, and fades in or out
-const REVEAL_FOLLOW = 12;
-const REVEAL_FADE = 6;
 
 export default class Paper {
     constructor() {
@@ -23,7 +21,6 @@ export default class Paper {
         this.renderer = this.orc.renderer.instance;
         this.debug = this.orc.debug;
         this.resources = this.orc.resources;
-        this.pointer = this.orc.pointer;
 
         this.preset = DEFAULT_PAPER;
         this.params = {
@@ -32,6 +29,7 @@ export default class Paper {
         this.image = this.resources.items.demo1;
         this.seed = Math.random();
         this.size = new THREE.Vector2();
+        this.reveal = new Reveal();
 
         this.setTargets();
         this.setMaterials();
@@ -106,11 +104,8 @@ export default class Paper {
                 uImageWhite: { value: 0.92 },
                 uDensity: { value: 1 },
                 uGranulation: { value: 0.2 },
-                uAspect: { value: 1 },
-                uRevealCenter: { value: new THREE.Vector2(0.5, 0.5) },
-                uRevealRadius: { value: 0.15 },
-                uRevealSoftness: { value: 0.5 },
-                uReveal: { value: 0 },
+                uRevealMask: { value: this.reveal.texture },
+                uRevealFeather: { value: 0.35 },
             },
             depthWrite: false,
         });
@@ -159,24 +154,15 @@ export default class Paper {
         const { width, height } = this.image.image;
         const imageAspect = width / height;
         const viewAspect = this.size.x / this.size.y;
-        this.displayMaterial.uniforms.uAspect.value = viewAspect;
         this.displayMaterial.uniforms.uImageScale.value.set(
             (IMAGE_HEIGHT * imageAspect) / viewAspect,
             IMAGE_HEIGHT,
         );
     }
 
-    // Ease the colour reveal towards the cursor, fading it in while the cursor is over the page.
     update(elapsed, delta) {
-        const display = this.displayMaterial.uniforms;
-        const reveal = display.uReveal;
-        const target = this.pointer.inside ? 1 : 0;
-        reveal.value += (target - reveal.value) * (1 - Math.exp(-REVEAL_FADE * delta));
-
-        // while hidden, jump straight to the cursor so the circle doesn't sweep in from where it left
-        const center = display.uRevealCenter.value;
-        if (reveal.value < 0.01) center.copy(this.pointer.uv);
-        else center.lerp(this.pointer.uv, 1 - Math.exp(-REVEAL_FOLLOW * delta));
+        this.reveal.update(elapsed, delta);
+        this.displayMaterial.uniforms.uRevealMask.value = this.reveal.texture;
     }
 
     setPaper(id) {
@@ -190,6 +176,7 @@ export default class Paper {
         this.renderer.getDrawingBufferSize(this.size);
         this.fieldTarget.setSize(this.size.x, this.size.y);
         this.paperTarget.setSize(this.size.x, this.size.y);
+        this.reveal.resize();
         this.generate();
     }
 
@@ -219,13 +206,10 @@ export default class Paper {
                 .add(display.uImageWhite, "value", 0.5, 1, 0.001)
                 .name("white point");
 
-            const revealFolder = this.debug.ui.addFolder("reveal");
-            revealFolder
-                .add(display.uRevealRadius, "value", 0.01, 1, 0.001)
-                .name("radius");
-            revealFolder
-                .add(display.uRevealSoftness, "value", 0, 1, 0.01)
-                .name("softness");
+            this.reveal.setDebug();
+            this.reveal.debugFolder
+                .add(display.uRevealFeather, "value", 0.01, 1, 0.01)
+                .name("edge feather");
         }
     }
 }
