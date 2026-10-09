@@ -1,0 +1,8 @@
+---
+alwaysApply: true
+---
+
+- Do not evoke browser actions when not asked
+- Do not start up a dev server when not asked
+- Follow the existing modular code structure when writing new code
+- Use Debug.addColor when a new color param needs to be added via lil-gui
