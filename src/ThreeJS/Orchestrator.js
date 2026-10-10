@@ -81,7 +81,6 @@ export default class Orchestrator {
     }
 
     update(elapsed, delta) {
-        this.camera.update();
         this.stage.update(elapsed, delta);
         // Important as this calls the renderer's render() method to actually put pixels on the screen.
         this.renderer.update();
@@ -112,7 +111,6 @@ export default class Orchestrator {
             }
         });
 
-        this.camera.controls.dispose();
         this.renderer.instance.dispose();
 
         if (this.debug.active) {

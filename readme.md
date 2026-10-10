@@ -7,7 +7,7 @@ Interactive Three.js demo: watercolor paintings sit on procedural paper in greys
 - Procedural cold-press paper with height field, lighting, and pigment response
 - Cursor-driven reveal mask: flood, bleed falloff, and drying at a fixed 60 steps/sec
 - Gallery of paintings with prev/next dissolve transitions
-- lil-gui debug folders for image and reveal params (`?debug` in the URL)
+- lil-gui debug folders for image and reveal params (add `#debug` to the URL; also on by default on localhost)
 
 ## Setup
 
@@ -26,4 +26,4 @@ pnpm build
 
 ## Imagery Credits
 
-Generated using Midjourney.
+Paintings generated with Midjourney. Shadow overlays from [Resource Boy](https://resourceboy.com/textures/shadow-overlays/).

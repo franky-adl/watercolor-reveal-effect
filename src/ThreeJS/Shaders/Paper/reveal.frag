@@ -15,7 +15,6 @@ uniform vec2 uBrushTo;         // cursor now, screen uv
 uniform float uBrushRadius;    // fraction of the viewport height
 uniform float uBrushSoftness;  // fraction of the radius that fades out
 uniform float uBrushStrength;  // 0 while the cursor is off the page
-uniform float uErase;          // 0 reveal (spread colour), 1 erase (spread emptiness)
 uniform float uFlow;           // furthest reach of the wet edge per step, fraction of the viewport height
 uniform float uBleed;          // strength lost per hop; lower bleeds further
 uniform float uDry;            // strength lost per step everywhere
@@ -43,17 +42,13 @@ void main(){
   float n2 = paint(vUv + vec2(0.0, disp.y));
   float n3 = paint(vUv - vec2(0.0, disp.y));
 
-  // reveal spreads high values with max; erase spreads emptiness with min
-  float flood = uErase > 0.5
-    ? min(min(n0, n1), min(n2, n3))
-    : max(max(n0, n1), max(n2, n3));
-  float wet = uErase > 0.5
-    ? mix(prev, min(prev, flood + uBleed), 0.5)
-    : mix(prev, max(prev, flood - uBleed), 0.5);
+  // dark-background case: spread high values with max (see DEVLOG)
+  float flood = max(max(n0, n1), max(n2, n3));
+  float wet = mix(prev, max(prev, flood - uBleed), 0.5);
 
   float d = stroke(p, uBrushFrom * aspect, uBrushTo * aspect);
   float brush = uBrushStrength * (1.0 - smoothstep(uBrushRadius * (1.0 - uBrushSoftness), uBrushRadius + 1e-4, d));
 
-  float ink = uErase > 0.5 ? mix(wet, 0.0, brush) : max(wet, brush);
+  float ink = max(wet, brush);
   o = vec4(max(ink - uDry, 0.0), 0.0, 0.0, 1.0);
 }

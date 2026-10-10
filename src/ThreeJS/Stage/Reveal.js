@@ -13,7 +13,6 @@ const MAX_STEPS_PER_FRAME = 4;
 
 // The watercolour colour-reveal mask: the cursor paints into it, the paint blooms outwards
 // and dries back to grey. Ping-pongs between two targets, one read while the other is written.
-// During gallery transitions the same sim erases (spreads emptiness) or reveals from stamps.
 export default class Reveal {
     constructor() {
         this.orc = new Orchestrator();
@@ -25,21 +24,11 @@ export default class Reveal {
         this.lastPointer = new THREE.Vector2();
         this.wasInside = false;
         this.accumulator = 0;
-
-        // Gallery dots easing in over time: { uv, born, duration, radius }.
-        this.stamps = [];
-        // When true, the brush follows neither pointer nor stamp (flood/dry only).
+        // When true, the mask is frozen (no brush, flood, or dry) — used during gallery transitions.
         this.locked = false;
-        this.savedDry = null;
 
         this.setTargets();
         this.setMaterial();
-    }
-
-    // Smoothstep ease for stamp opacity 0 → 1.
-    static ease(t) {
-        const x = Math.min(Math.max(t, 0), 1);
-        return x * x * (3 - 2 * x);
     }
 
     get texture() {
@@ -83,7 +72,6 @@ export default class Reveal {
                 uBrushRadius: { value: 0.1 },
                 uBrushSoftness: { value: 0.5 },
                 uBrushStrength: { value: 0 },
-                uErase: { value: 0 },
                 uFlow: { value: 0.01 },
                 uBleed: { value: 0.015 },
                 uDry: { value: 0.002 },
@@ -92,7 +80,7 @@ export default class Reveal {
         this.quad = new FullScreenQuad(this.material);
     }
 
-    // Write a constant into both ping-pong targets (e.g. 1 before a fade-out, 0 before a fade-in).
+    // Write a constant into both ping-pong targets (e.g. 0 after a gallery transition).
     fill(value) {
         const previousTarget = this.renderer.getRenderTarget();
         const previousClear = new THREE.Color();
@@ -110,89 +98,23 @@ export default class Reveal {
         this.renderer.setRenderTarget(previousTarget);
     }
 
-    setErase(erase) {
-        this.material.uniforms.uErase.value = erase ? 1 : 0;
-    }
-
-    // Suppress pointer painting; optional dry override (fade-in should not dry away stamps).
-    lock({ dry = null } = {}) {
+    // Freeze the mask so gallery dissolves don't keep blooming or drying underneath.
+    lock() {
         this.locked = true;
-        this.stamps.length = 0;
-        if (dry !== null) {
-            if (this.savedDry === null) {
-                this.savedDry = this.material.uniforms.uDry.value;
-            }
-            this.material.uniforms.uDry.value = dry;
-        }
+        this.accumulator = 0;
     }
 
     unlock() {
         this.locked = false;
-        this.stamps.length = 0;
-        this.setErase(false);
+        this.accumulator = 0;
         // Treat the next frame like a fresh entry so we don't stroke from the
         // pre-lock cursor to wherever the pointer moved during the transition.
         this.wasInside = false;
         this.lastPointer.copy(this.pointer.uv);
-        if (this.savedDry !== null) {
-            this.material.uniforms.uDry.value = this.savedDry;
-            this.savedDry = null;
-        }
-    }
-
-    // Start a circular stamp that eases strength 0 → 1 over `duration` seconds.
-    stampAt(uv, { radius, duration } = {}) {
-        this.stamps.push({
-            uv: uv.clone(),
-            born: null,
-            duration: duration ?? 0.5,
-            radius: radius ?? this.material.uniforms.uBrushRadius.value,
-        });
-    }
-
-    // Deposit easing stamps without advancing flood/dry (flow runs in the step loop below).
-    paintStamps(elapsed) {
-        if (!this.stamps.length) return;
-
-        const uniforms = this.material.uniforms;
-        const previousTarget = this.renderer.getRenderTarget();
-        const prevRadius = uniforms.uBrushRadius.value;
-        const prevFlow = uniforms.uFlow.value;
-        const prevDry = uniforms.uDry.value;
-
-        uniforms.uFlow.value = 0;
-        uniforms.uDry.value = 0;
-
-        for (const stamp of this.stamps) {
-            if (stamp.born === null) stamp.born = elapsed;
-            const strength = Reveal.ease(
-                (elapsed - stamp.born) / stamp.duration,
-            );
-            if (strength <= 0) continue;
-
-            uniforms.uBrushRadius.value = stamp.radius;
-            uniforms.uBrushFrom.value.copy(stamp.uv);
-            uniforms.uBrushTo.value.copy(stamp.uv);
-            uniforms.uBrushStrength.value = strength;
-            uniforms.uPrev.value = this.read.texture;
-            this.renderer.setRenderTarget(this.write);
-            this.quad.render(this.renderer);
-            [this.read, this.write] = [this.write, this.read];
-        }
-
-        uniforms.uBrushRadius.value = prevRadius;
-        uniforms.uFlow.value = prevFlow;
-        uniforms.uDry.value = prevDry;
-        uniforms.uBrushStrength.value = 0;
-        this.renderer.setRenderTarget(previousTarget);
-
-        this.stamps = this.stamps.filter(
-            (s) => s.born === null || elapsed < s.born + s.duration,
-        );
     }
 
     update(elapsed, delta) {
-        this.paintStamps(elapsed);
+        if (this.locked) return;
 
         this.accumulator = Math.min(
             this.accumulator + delta,
@@ -202,31 +124,21 @@ export default class Reveal {
 
         const uniforms = this.material.uniforms;
         const previousTarget = this.renderer.getRenderTarget();
-        let pointerFrom = null;
-        let pointerTo = null;
-        let pointerStrength = 0;
-
-        if (!this.locked) {
-            const inside = this.pointer.inside;
-            // on entering, start the stroke at the cursor rather than dragging it from where it left
-            if (!this.wasInside) this.lastPointer.copy(this.pointer.uv);
-            pointerFrom = this.lastPointer;
-            pointerTo = this.pointer.uv;
-            pointerStrength = inside ? 1 : 0;
-        }
+        const inside = this.pointer.inside;
+        // on entering, start the stroke at the cursor rather than dragging it from where it left
+        if (!this.wasInside) this.lastPointer.copy(this.pointer.uv);
+        const pointerFrom = this.lastPointer;
+        const pointerTo = this.pointer.uv;
+        const pointerStrength = inside ? 1 : 0;
 
         let firstStep = true;
         while (this.accumulator >= STEP) {
             this.accumulator -= STEP;
 
-            if (pointerFrom) {
-                // pointer stroke is applied on the first step only, like before
-                uniforms.uBrushFrom.value.copy(pointerFrom);
-                uniforms.uBrushTo.value.copy(pointerTo);
-                uniforms.uBrushStrength.value = firstStep ? pointerStrength : 0;
-            } else {
-                uniforms.uBrushStrength.value = 0;
-            }
+            // pointer stroke is applied on the first step only
+            uniforms.uBrushFrom.value.copy(pointerFrom);
+            uniforms.uBrushTo.value.copy(pointerTo);
+            uniforms.uBrushStrength.value = firstStep ? pointerStrength : 0;
 
             uniforms.uPrev.value = this.read.texture;
             this.renderer.setRenderTarget(this.write);
@@ -236,10 +148,8 @@ export default class Reveal {
         }
         this.renderer.setRenderTarget(previousTarget);
 
-        if (!this.locked) {
-            this.lastPointer.copy(this.pointer.uv);
-            this.wasInside = this.pointer.inside;
-        }
+        this.lastPointer.copy(this.pointer.uv);
+        this.wasInside = this.pointer.inside;
     }
 
     resize() {

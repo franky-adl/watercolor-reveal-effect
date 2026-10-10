@@ -1,16 +1,15 @@
 import * as THREE from "three";
 import Orchestrator from "./Orchestrator.js";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
+// Perspective camera kept for Three.js's render path. The paper mesh is drawn in
+// clip space by its vertex shader, so camera pose does not affect the image.
 export default class Camera {
     constructor() {
         this.orc = new Orchestrator();
         this.sizes = this.orc.sizes;
         this.scene = this.orc.scene;
-        this.canvas = this.orc.canvas;
 
         this.setInstance();
-        this.setControls();
     }
 
     setInstance() {
@@ -24,17 +23,8 @@ export default class Camera {
         this.scene.add(this.instance);
     }
 
-    setControls() {
-        this.controls = new OrbitControls(this.instance, this.canvas);
-        this.controls.enableDamping = true;
-    }
-
     resize() {
         this.instance.aspect = this.sizes.width / this.sizes.height;
         this.instance.updateProjectionMatrix();
-    }
-
-    update() {
-        this.controls.update();
     }
 }

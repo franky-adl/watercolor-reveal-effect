@@ -16,6 +16,7 @@ body {
 }
 
 .shadow-overlay {
+    display: none;
     position: fixed;
     inset: 0;
     z-index: 1;
@@ -90,8 +91,8 @@ body {
     }
 
     .nav img {
-        width: 28px;
-        height: 28px;
+        width: 24px;
+        height: 24px;
     }
 
     .nav--prev {

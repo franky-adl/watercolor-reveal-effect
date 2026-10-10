@@ -3,7 +3,7 @@ import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
 import Orchestrator from "../Orchestrator.js";
 import Reveal from "./Reveal.js";
 import { MOBILE_MAX_WIDTH } from "./Gallery.js";
-import sources from "../sources.js";
+import { SHADOW_OVERLAYS } from "../sources.js";
 
 import fullscreenVertexShader from "../Shaders/Paper/fullscreen.vert";
 import fieldFragmentShader from "../Shaders/Paper/field.frag";
@@ -16,10 +16,6 @@ const PAPER_UNITS = 1100;
 const IMAGE_HEIGHT = 0.9;
 // painting width as a fraction of the viewport width (mobile)
 const IMAGE_WIDTH = 0.8;
-
-const SHADOW_OVERLAYS = sources.filter(
-    (s) => s.type === "texture" && s.name.startsWith("shadowOverlay"),
-);
 
 // Cold press: medium tooth, natural white — the all-round watercolour sheet.
 const PAPER = {
@@ -145,7 +141,7 @@ export default class Paper {
         this.displayMaterial.uniforms.uUseShadow.value = useShadow ? 1 : 0;
 
         if (!this.shadowOverlayEl) return;
-        this.shadowOverlayEl.style.display = useShadow ? "" : "none";
+        this.shadowOverlayEl.style.display = useShadow ? "block" : "none";
 
         const source = SHADOW_OVERLAYS.find((s) => s.name === overlay);
         if (source) this.shadowOverlayEl.src = `/${source.path}`;

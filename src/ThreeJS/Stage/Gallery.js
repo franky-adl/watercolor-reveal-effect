@@ -113,8 +113,8 @@ export default class Gallery {
         this.inStartedAt = null;
         this.setNavEnabled(false);
 
-        // Freeze brush + drying; keep the colour mask until the outgoing layer is gone.
-        this.reveal.lock({ dry: 0 });
+        // Freeze the colour mask until the outgoing layer is gone.
+        this.reveal.lock();
         this.paper.setTransition({
             active: true,
             outT: 0,
