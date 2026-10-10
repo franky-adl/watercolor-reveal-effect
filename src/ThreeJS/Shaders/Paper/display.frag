@@ -44,8 +44,8 @@ vec3 toSRGB(vec3 c){
 // e.g. tint the shades towards more blue
 vec3 lightness(vec2 vUv) {
   // distance field from a line
-  float l = abs(dot(vUv - vec2(1.0, 1.0), normalize(vec2(2.0, 1.0))));
-  return vec3(exp(-l * 0.7), exp(-l * 0.7), exp(-l * 0.5));
+  float l = abs(dot(vUv - vec2(1.0, 0.7), normalize(vec2(3.0, 1.0))));
+  return vec3(exp(-l * 0.6), exp(-l * 0.6), exp(-l * 0.4));
 }
 
 // How much of the painting's colour shows: 1 where the reveal has bloomed, 0 (grey) elsewhere.

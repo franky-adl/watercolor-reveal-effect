@@ -130,6 +130,10 @@ export default class Reveal {
         this.locked = false;
         this.stamps.length = 0;
         this.setErase(false);
+        // Treat the next frame like a fresh entry so we don't stroke from the
+        // pre-lock cursor to wherever the pointer moved during the transition.
+        this.wasInside = false;
+        this.lastPointer.copy(this.pointer.uv);
         if (this.savedDry !== null) {
             this.material.uniforms.uDry.value = this.savedDry;
             this.savedDry = null;
