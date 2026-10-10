@@ -2,6 +2,8 @@
 
 Interactive Three.js demo: watercolor paintings sit on procedural paper in greyscale, and the cursor floods colour back in with a bleeding, drying wash. Inspired by [Yuri Artiukh’s recreation](https://www.youtube.com/live/ggruH0fHPOM) of the [14islands](https://www.14islands.com/) footer; paper shading adapted from [watercolor-playground](https://github.com/msurguy/watercolor-playground).
 
+![Watercolor reveal effect preview](./preview.webp)
+
 ## Features
 
 - Procedural cold-press paper with height field, lighting, and pigment response
