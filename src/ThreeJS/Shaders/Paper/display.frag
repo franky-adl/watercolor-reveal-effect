@@ -26,6 +26,7 @@ uniform float uTransitionSoft;
 uniform float uTransitionScale;
 uniform int uTransitionOctaves;
 uniform float uSeedIn;        // independent seed for the fade-in noise field
+uniform float uUseShadow;     // 1: flat 0.8 shade (DOM overlay on); 0: procedural lightness
 
 #include ./utils.glsl;
 
@@ -118,6 +119,7 @@ vec3 pigment(vec2 uv, vec4 paper){
 void main(){
   vec4 paper = texture(uPaper, vUv);
   vec3 base = uPaperTint * pigment(vUv, paper);
-  vec3 color = paperColour(paper, base) * lightness(vUv);
+  vec3 shade = uUseShadow > 0.5 ? vec3(0.8) : lightness(vUv);
+  vec3 color = paperColour(paper, base) * shade;
   o = vec4(toSRGB(color), 1.0);
 }

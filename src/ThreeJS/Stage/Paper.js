@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
 import Orchestrator from "../Orchestrator.js";
 import Reveal from "./Reveal.js";
+import sources from "../sources.js";
 
 import fullscreenVertexShader from "../Shaders/Paper/fullscreen.vert";
 import fieldFragmentShader from "../Shaders/Paper/field.frag";
@@ -12,6 +13,10 @@ import displayFragmentShader from "../Shaders/Paper/display.frag";
 const PAPER_UNITS = 1100;
 // painting height as a fraction of the viewport height
 const IMAGE_HEIGHT = 0.9;
+
+const SHADOW_OVERLAYS = sources.filter(
+    (s) => s.type === "texture" && s.name.startsWith("shadowOverlay"),
+);
 
 // Cold press: medium tooth, natural white — the all-round watercolour sheet.
 const PAPER = {
@@ -34,9 +39,16 @@ export default class Paper {
         this.size = new THREE.Vector2();
         this.reveal = new Reveal();
 
+        this.shadowParams = {
+            useShadow: false,
+            overlay: "shadowOverlay7",
+        };
+        this.shadowOverlayEl = document.querySelector(".shadow-overlay");
+
         this.setTargets();
         this.setMaterials();
         this.setMesh();
+        this.applyShadowOverlay();
         this.setDebug();
         this.generate();
     }
@@ -119,9 +131,21 @@ export default class Paper {
                 uTransitionSoft: { value: 0.15 },
                 uTransitionScale: { value: 3.0 },
                 uTransitionOctaves: { value: 4 },
+                uUseShadow: { value: this.shadowParams.useShadow ? 1 : 0 },
             },
             depthWrite: false,
         });
+    }
+
+    applyShadowOverlay() {
+        const { useShadow, overlay } = this.shadowParams;
+        this.displayMaterial.uniforms.uUseShadow.value = useShadow ? 1 : 0;
+
+        if (!this.shadowOverlayEl) return;
+        this.shadowOverlayEl.style.display = useShadow ? "" : "none";
+
+        const source = SHADOW_OVERLAYS.find((s) => s.name === overlay);
+        if (source) this.shadowOverlayEl.src = `/${source.path}`;
     }
 
     setMesh() {
@@ -242,6 +266,22 @@ export default class Paper {
             imageFolder
                 .add(display.uImageWhite, "value", 0.5, 1, 0.001)
                 .name("white point");
+
+            const shadowFolder = this.debug.ui.addFolder("shadow");
+            shadowFolder
+                .add(this.shadowParams, "useShadow")
+                .name("useShadow")
+                .onChange(() => this.applyShadowOverlay());
+            if (SHADOW_OVERLAYS.length) {
+                shadowFolder
+                    .add(
+                        this.shadowParams,
+                        "overlay",
+                        SHADOW_OVERLAYS.map((s) => s.name),
+                    )
+                    .name("overlay")
+                    .onChange(() => this.applyShadowOverlay());
+            }
 
             this.reveal.setDebug();
             this.reveal.debugFolder

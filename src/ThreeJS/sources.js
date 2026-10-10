@@ -19,4 +19,34 @@ export default [
         type: "texture",
         path: "textures/nyc-landscape.webp",
     },
+    {
+        name: "shadowOverlay",
+        type: "texture",
+        path: "textures/shadow-overlay.webp",
+    },
+    {
+        name: "shadowOverlay2",
+        type: "texture",
+        path: "textures/shadow-overlay2.webp",
+    },
+    {
+        name: "shadowOverlay3",
+        type: "texture",
+        path: "textures/shadow-overlay3.webp",
+    },
+    {
+        name: "shadowOverlay5",
+        type: "texture",
+        path: "textures/shadow-overlay5.webp",
+    },
+    {
+        name: "shadowOverlay6",
+        type: "texture",
+        path: "textures/shadow-overlay6.webp",
+    },
+    {
+        name: "shadowOverlay7",
+        type: "texture",
+        path: "textures/shadow-overlay7.webp",
+    },
 ];

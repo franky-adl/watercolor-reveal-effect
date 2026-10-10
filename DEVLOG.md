@@ -51,6 +51,6 @@
 
 - (done) fix the cursor jump after leaving the image canvas
 - (done) limit the number of pickable paper texture(or just use cold press)
-- add environment shadows e.g. plants/window frames to improve overall look
+- (done) add environment shadows e.g. plants/window frames to improve overall look (shadow overlay textures from https://resourceboy.com/textures/shadow-overlays/)
 - include a different set of images for mobile(portrait ones)
 - open-source the demo
