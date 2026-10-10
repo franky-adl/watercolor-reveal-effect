@@ -70,7 +70,7 @@ body {
 }
 
 .nav--prev {
-    left: 12.75rem;
+    left: clamp(1rem, -23.8889rem + 38.8889vw, 15rem);
 }
 
 .nav--prev img {
@@ -78,7 +78,7 @@ body {
 }
 
 .nav--next {
-    right: 12.75rem;
+    right: clamp(1rem, -23.8889rem + 38.8889vw, 15rem);
 }
 
 @media (max-width: 1024px) {
