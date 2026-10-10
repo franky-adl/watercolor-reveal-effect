@@ -1,7 +1,6 @@
 import * as THREE from "three";
 import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
 import Orchestrator from "../Orchestrator.js";
-import { PAPERS, DEFAULT_PAPER } from "./papers.js";
 import Reveal from "./Reveal.js";
 
 import fullscreenVertexShader from "../Shaders/Paper/fullscreen.vert";
@@ -14,6 +13,14 @@ const PAPER_UNITS = 1100;
 // painting height as a fraction of the viewport height
 const IMAGE_HEIGHT = 0.9;
 
+// Cold press: medium tooth, natural white — the all-round watercolour sheet.
+const PAPER = {
+    tint: "#fafcf3",
+    fleck: "#8a8070",
+    bump: 0.45,
+    mottle: 0.0,
+};
+
 export default class Paper {
     constructor() {
         this.orc = new Orchestrator();
@@ -22,10 +29,6 @@ export default class Paper {
         this.debug = this.orc.debug;
         this.resources = this.orc.resources;
 
-        this.preset = DEFAULT_PAPER;
-        this.params = {
-            paper: this.preset.id,
-        };
         this.image = this.resources.items.landscape1;
         this.seed = Math.random();
         this.size = new THREE.Vector2();
@@ -71,7 +74,6 @@ export default class Paper {
                 uRes: { value: new THREE.Vector2() },
                 uScale: { value: 1 },
                 uSeed: { value: this.seed },
-                uKind: { value: this.preset.kind },
             },
         });
         this.fieldQuad = new FullScreenQuad(this.fieldMaterial);
@@ -95,9 +97,9 @@ export default class Paper {
             fragmentShader: displayFragmentShader,
             uniforms: {
                 uPaper: { value: this.paperTarget.texture },
-                uPaperTint: { value: new THREE.Color(this.preset.tint) },
-                uFleckTint: { value: new THREE.Color(this.preset.fleck) },
-                uMottle: { value: this.preset.mottle },
+                uPaperTint: { value: new THREE.Color(PAPER.tint) },
+                uFleckTint: { value: new THREE.Color(PAPER.fleck) },
+                uMottle: { value: PAPER.mottle },
                 uTexture: { value: 1 },
                 uImage: { value: this.image },
                 uImageNext: { value: this.image },
@@ -138,17 +140,12 @@ export default class Paper {
         const field = this.fieldMaterial.uniforms;
         field.uRes.value.copy(this.size);
         field.uScale.value = scale;
-        field.uKind.value = this.preset.kind;
 
         const light = this.lightMaterial.uniforms;
         light.uTexel.value.set(1 / this.size.x, 1 / this.size.y);
         // the relief is drawn in paper units, so its slope per texel shrinks as texels get smaller
-        light.uBump.value = (this.preset.bump * 1.4) / scale;
+        light.uBump.value = (PAPER.bump * 1.4) / scale;
 
-        const display = this.displayMaterial.uniforms;
-        display.uPaperTint.value.set(this.preset.tint);
-        display.uFleckTint.value.set(this.preset.fleck);
-        display.uMottle.value = this.preset.mottle;
         this.placeImage();
 
         const previousTarget = this.renderer.getRenderTarget();
@@ -179,13 +176,6 @@ export default class Paper {
     update(elapsed, delta) {
         this.reveal.update(elapsed, delta);
         this.displayMaterial.uniforms.uRevealMask.value = this.reveal.texture;
-    }
-
-    setPaper(id) {
-        const preset = PAPERS.find((p) => p.id === id);
-        if (!preset || preset === this.preset) return;
-        this.preset = preset;
-        this.generate();
     }
 
     setImage(texture) {
@@ -238,18 +228,6 @@ export default class Paper {
 
     setDebug() {
         if (this.debug.active) {
-            this.debugFolder = this.debug.ui.addFolder("paper");
-
-            const options = Object.fromEntries(
-                PAPERS.map((p) => [p.name, p.id]),
-            );
-            this.debugFolder
-                .add(this.params, "paper", options)
-                .name("type")
-                .onChange((id) => {
-                    this.setPaper(id);
-                });
-
             const display = this.displayMaterial.uniforms;
             const imageFolder = this.debug.ui.addFolder("image");
             imageFolder

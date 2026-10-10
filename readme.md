@@ -4,10 +4,10 @@ Interactive Three.js demo: watercolor paintings sit on procedural paper in greys
 
 ## Features
 
-- Procedural paper (cold press, hot press, rough, and more) with height field, lighting, and pigment response
+- Procedural cold-press paper with height field, lighting, and pigment response
 - Cursor-driven reveal mask: flood, bleed falloff, and drying at a fixed 60 steps/sec
 - Gallery of landscapes with prev/next dissolve transitions
-- lil-gui debug folders for paper and reveal params (`?debug` in the URL)
+- lil-gui debug folders for image and reveal params (`?debug` in the URL)
 
 ## Setup
 
@@ -35,7 +35,6 @@ src/
       Paper.js              # paper generation + display
       Reveal.js             # ping-pong reveal simulation
       Gallery.js            # image navigation + dissolve
-      papers.js             # paper presets
     Shaders/Paper/          # field, light, display, reveal
     Utils/                  # Debug, Pointer, Resources, Sizes
 static/textures/            # watercolor images
