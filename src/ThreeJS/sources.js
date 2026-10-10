@@ -20,6 +20,21 @@ export default [
         path: "textures/nyc-landscape.webp",
     },
     {
+        name: "portrait1",
+        type: "texture",
+        path: "textures/beach-shore.webp",
+    },
+    {
+        name: "portrait2",
+        type: "texture",
+        path: "textures/vivid-street.webp",
+    },
+    {
+        name: "portrait3",
+        type: "texture",
+        path: "textures/door-vines.webp",
+    },
+    {
         name: "shadowOverlay",
         type: "texture",
         path: "textures/shadow-overlay.webp",

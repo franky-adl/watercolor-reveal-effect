@@ -1,10 +1,22 @@
 import Orchestrator from "../Orchestrator.js";
 import sources from "../sources.js";
 
-// Image names from the resource manifest, in gallery order.
-const IMAGE_NAMES = sources
+export const MOBILE_MAX_WIDTH = 1024;
+
+const LANDSCAPE_NAMES = sources
     .filter((s) => s.type === "texture" && s.name.startsWith("landscape"))
     .map((s) => s.name);
+
+const PORTRAIT_NAMES = sources
+    .filter((s) => s.type === "texture" && s.name.startsWith("portrait"))
+    .map((s) => s.name);
+
+function namesForWidth(width) {
+    if (width <= MOBILE_MAX_WIDTH && PORTRAIT_NAMES.length) {
+        return PORTRAIT_NAMES;
+    }
+    return LANDSCAPE_NAMES;
+}
 
 export default class Gallery {
     constructor(paper) {
@@ -13,11 +25,6 @@ export default class Gallery {
         this.debug = this.orc.debug;
         this.paper = paper;
         this.reveal = paper.reveal;
-
-        this.names = IMAGE_NAMES.length
-            ? IMAGE_NAMES
-            : Object.keys(this.resources.items);
-        this.index = Math.max(0, this.names.indexOf("landscape1"));
 
         this.params = {
             duration: 2,
@@ -33,8 +40,38 @@ export default class Gallery {
         this.startedAt = 0;
         this.inStartedAt = null;
 
+        this.names = [];
+        this.index = 0;
+        this.syncMode({ force: true });
+
         this.setUI();
         this.setDebug();
+    }
+
+    syncMode({ force = false } = {}) {
+        const nextNames = namesForWidth(this.orc.sizes.width);
+        const changed =
+            force ||
+            nextNames.length !== this.names.length ||
+            nextNames.some((name, i) => name !== this.names[i]);
+        if (!changed) return;
+
+        if (this.phase === "transition") {
+            this.phase = "idle";
+            this.pendingTexture = null;
+            this.paper.setTransition({ active: false, outT: 0, inT: -1 });
+            this.reveal.fill(0);
+            this.reveal.unlock();
+            this.setNavEnabled(true);
+        }
+
+        this.names = nextNames.length
+            ? nextNames
+            : Object.keys(this.resources.items);
+        this.index = 0;
+
+        const texture = this.resources.items[this.names[this.index]];
+        if (texture) this.paper.setImage(texture);
     }
 
     setUI() {
@@ -131,6 +168,10 @@ export default class Gallery {
         );
 
         if (outLinear >= 1 && inLinear >= 1) this.finish();
+    }
+
+    resize() {
+        this.syncMode();
     }
 
     setDebug() {

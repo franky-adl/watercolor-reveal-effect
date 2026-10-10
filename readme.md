@@ -23,3 +23,7 @@ pnpm dev
 # Production build → dist/
 pnpm build
 ```
+
+## Imagery Credits
+
+Generated using Midjourney.

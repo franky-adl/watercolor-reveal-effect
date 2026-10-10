@@ -17,6 +17,7 @@ export default class Stage {
 
     // called after the renderer has been resized
     resize() {
+        this.gallery?.resize();
         this.paper?.resize();
     }
 

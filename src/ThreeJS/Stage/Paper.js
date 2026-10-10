@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { FullScreenQuad } from "three/addons/postprocessing/Pass.js";
 import Orchestrator from "../Orchestrator.js";
 import Reveal from "./Reveal.js";
+import { MOBILE_MAX_WIDTH } from "./Gallery.js";
 import sources from "../sources.js";
 
 import fullscreenVertexShader from "../Shaders/Paper/fullscreen.vert";
@@ -11,8 +12,10 @@ import displayFragmentShader from "../Shaders/Paper/display.frag";
 
 // paper features are drawn for a canvas this many pixels tall, so the grain looks the same at any size
 const PAPER_UNITS = 1100;
-// painting height as a fraction of the viewport height
+// painting height as a fraction of the viewport height (desktop)
 const IMAGE_HEIGHT = 0.9;
+// painting width as a fraction of the viewport width (mobile)
+const IMAGE_WIDTH = 0.8;
 
 const SHADOW_OVERLAYS = sources.filter(
     (s) => s.type === "texture" && s.name.startsWith("shadowOverlay"),
@@ -180,11 +183,20 @@ export default class Paper {
         this.renderer.setRenderTarget(previousTarget);
     }
 
-    // Painting size in screen uv at IMAGE_HEIGHT, keeping aspect.
+    // Painting size in screen uv, keeping aspect.
+    // Desktop: fit to IMAGE_HEIGHT. Mobile: fit to IMAGE_WIDTH.
     imageScaleFor(texture) {
         const { width, height } = texture.image;
         const imageAspect = width / height;
         const viewAspect = this.size.x / this.size.y;
+
+        if (this.orc.sizes.width <= MOBILE_MAX_WIDTH) {
+            return new THREE.Vector2(
+                IMAGE_WIDTH,
+                (IMAGE_WIDTH * viewAspect) / imageAspect,
+            );
+        }
+
         return new THREE.Vector2(
             (IMAGE_HEIGHT * imageAspect) / viewAspect,
             IMAGE_HEIGHT,

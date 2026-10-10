@@ -80,22 +80,25 @@ body {
     right: 12.75rem;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 1024px) {
     .nav {
-        width: 2.5rem;
-        height: 2.5rem;
+        top: auto;
+        bottom: 1.25rem;
+        width: 2.75rem;
+        height: 2.75rem;
+        transform: none;
     }
 
     .nav img {
-        width: 26px;
-        height: 26px;
+        width: 28px;
+        height: 28px;
     }
 
     .nav--prev {
-        left: 0.25rem;
+        left: calc(50% - 3.25rem);
     }
 
     .nav--next {
-        right: 0.25rem;
+        right: calc(50% - 3.25rem);
     }
 }
